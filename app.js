@@ -1,8 +1,6 @@
-const express = require('express');
+require('dotenv').config();
+const Server = require('./Server')
 
-const app = express();
+const server = new Server;
 
-app.get('/', function (req, res){res.send ('Hola Dai');});
-
-app.listen(3000);
-//localhost:3000
+server.listen();
