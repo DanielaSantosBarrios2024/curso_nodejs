@@ -17,6 +17,8 @@ FROM
 usuarios
 WHERE
 status = 1
+LIMIT
+?,?
 `, 
 updateUsuario:`
 UPDATE
@@ -34,6 +36,16 @@ SET
 status =0
 WHERE 
 email=?
+`,
+getUsuarioByEmail:`
+SELECT
+*
+FROM
+usuarios
+WHERE
+email=?
+AND
+status=1
 `,
 };
 

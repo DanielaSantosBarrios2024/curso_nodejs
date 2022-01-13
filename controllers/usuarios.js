@@ -1,12 +1,24 @@
 const { request, response } = require ("express");
-const res = require("express/lib/response");
+const usuariosQueries = require("../models/usuarios");
 const pool = require("../db/conexion");
+const bcryptjs = require("../bcryptjs");
 
-const usuarioGet = async( req = request, res = response ) => {
+const usuariosGet = async( req = request, res = response ) => {
+    const {limite = 5, desde =0} = req.query;
+    desde = parseInt(desde);
+    limite = parseInt(limite);
+
+if(! Number.isInteger(limite) || !Number.isInteger(desde)){
+res.status(400).json({msg: "NO SE PUEDE REALIZAR ESTA CONSULTA"});
+return;
+}
+
     let conn;
     try{
         conn = await pool.getConnection();
-        const usuarios = await conn.query(usuariosQueries.selectUsuarios)
+        const usuarios = await conn.query(usuariosQueries.selectUsuarios, [desde , 
+            limite,
+        ]);
         res.json ({usuarios});
         
     } catch (error){
@@ -17,13 +29,15 @@ const usuarioGet = async( req = request, res = response ) => {
     } 
  };
 
- const usuarioPost = ( req = request, res = response ) => {
+ const usuariosPost = ( req = request, res = response ) => {
     const {nombre, apellido, mail, status = 1} = req.body; 
     let conn;
     try{
+        const salt = bcryptjs.getSaltSync();
+        const passwordHash = bcryptjs.hashSync(password, salt);
         conn = await pool.getConnection();
         const usuarios = await conn.query(usuariosQueries.InsertUsuario, [
-            nombre, email, password, status
+            nombre, email, passwordHash, status
         ]);
         res.json ({usuarios});
         
@@ -35,7 +49,7 @@ const usuarioGet = async( req = request, res = response ) => {
     } 
 };
 
-const usuarioPut = ( req = request, res = response ) => {
+const usuariosPut = ( req = request, res = response ) => {
     const {email}= req.query;
     const {nombre, status} = req.body;
     let conn;
@@ -52,7 +66,7 @@ const usuarioPut = ( req = request, res = response ) => {
     } 
 };
 
-const usuarioDelete = ( req = request, res = response ) => {
+const usuariosDelete = ( req = request, res = response ) => {
     const {email} = req.query;
     let conn;
     try{
@@ -69,5 +83,39 @@ const usuarioDelete = ( req = request, res = response ) => {
     
 };
 
-module.exports = {usuariosGet, usuariosPost, usuariosPut, usuariosDelete};
+const usuarioSingin = async( req = request, res = response) => {
+const {email, password} = req.body;
+    let conn;
+try{
+    conn =await pool.getConnection();
+    const usuarios = await conn.query(usuariosQueries.getUsuarioByEmail, [email]);
+    if(usuarios.length === 0){
+        res.status(404).json({msg:`NO SE ENCONTRO USUARIO ${email}.`});
+        return;
+    }
+const passwordValido = bcryptjs.compareSync(password, usuarios[0].password);
+console.log(usuarios[0].password);
+
+if (!passwordValido){
+res.status(401).json({msg:"CONTRASEÑA SIN COINCIDENCIAS"});
+return;
+}
+
+res.json({msg:"INICIO DE SESION SATISFACTORIA"});
+
+    res.json({usuarios});
+}catch (error){
+    console.log(error);
+    res
+    .status(500)
+    .json({msg: "FAVOR DE CONTACTAR AL ADMINISTRADOR", error});
+
+}finally{
+    if(conn) conn.end();
+}
+
+}
+
+
+module.exports = {usuariosGet, usuariosPost, usuariosPut, usuariosDelete, usuarioSingin,};
 
