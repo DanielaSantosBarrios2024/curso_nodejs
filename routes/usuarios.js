@@ -5,14 +5,15 @@ const {
     usuariosPost,
     usuariosPut,
     usuariosDelete,
+    usuarioSignin,
 } = require("../controllers/usuarios");
 
 const router = Router();
 
 //localhost:3001/usuarios/
-router.post("/", usuariosGet); 
+router.get("/", usuariosGet); 
 router.post("/", usuariosPost);
-router.post("/", usuariosPut);
-router.post("/", usuariosDelete);
+router.put("/", usuariosPut);
+router.delete("/", usuariosDelete);
 router.post("/signin", usuarioSignin);
 module.exports = router;
